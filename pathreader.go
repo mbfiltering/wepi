@@ -40,6 +40,10 @@ func (w *WepiController) checkPatternsForPath(path string) (map[string]string, s
 
 // loadRouteFromRequest finds a registered route for the given path and method.
 func (w *WepiController) loadRouteFromRequest(path string, method string) (newPath string, _ *Route, pathPatternParams map[string]string) {
+	// A literal route wins over a pattern that would otherwise capture one of its segments as a param
+	if r, ok := w.routes.Load(path + method); ok {
+		return path, r.(*Route), nil
+	}
 	pathPatternParams, foundPatternPath := w.checkPatternsForPath(path)
 
 	if foundPatternPath != "" {

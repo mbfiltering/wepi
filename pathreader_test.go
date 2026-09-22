@@ -83,3 +83,29 @@ func TestLoadRouteFromRequest(t *testing.T) {
 		t.Error("expected no match for wrong method")
 	}
 }
+
+func TestLoadRouteFromRequest_LiteralBeatsPattern(t *testing.T) {
+	w := Get()
+
+	pattern := &Route{route: "/device/{id}/status", method: GET}
+	w.addRoute(&WepiComposedRoute{path: "/device/{id}/status", route: pattern, method: GET})
+	w.addPattern("/device/{id}/status")
+
+	literal := &Route{route: "/device/pin/status", method: POST}
+	w.addRoute(&WepiComposedRoute{path: "/device/pin/status", route: literal, method: POST})
+
+	// The literal POST route must not be shadowed by the GET pattern capturing id="pin"
+	path, r, params := w.loadRouteFromRequest("/device/pin/status", POST)
+	if r != literal {
+		t.Fatalf("expected the literal route, got %v (path %q)", r, path)
+	}
+	if params != nil {
+		t.Errorf("expected no pattern params, got %v", params)
+	}
+
+	// The pattern still serves every other id
+	_, r, params = w.loadRouteFromRequest("/device/abc/status", GET)
+	if r != pattern || params["id"] != "abc" {
+		t.Errorf("expected the pattern route with id=abc, got %v %v", r, params)
+	}
+}
