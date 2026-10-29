@@ -249,7 +249,9 @@ func (w *WepiController) runUnwrapped(pathHead string, req *http.Request, wr htt
 		return true, nil
 	}
 
-	log.Printf(req.URL.Path+" response status code: %v", status)
+	if LogAllResponses || status >= 400 {
+		log.Printf(req.URL.Path+" response status code: %v", status)
+	}
 
 	wr.Write(body)
 
